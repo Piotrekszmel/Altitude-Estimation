@@ -1,96 +1,155 @@
 import numpy as np
 from math import sqrt
+from data_generator import data_generator
+import bisect
 
-def cubic_interp1d(x0, x, y):
-    """
-    Interpolate a 1-D function using cubic splines.
-      x0 : a float or an 1d-array
-      x : (N,) array_like
-          A 1-D array of real/complex values.
-      y : (N,) array_like
-          A 1-D array of real values. The length of y along the
-          interpolation axis must be equal to the length of x.
 
-    Implement a trick to generate at first step the cholesky matrice L of
-    the tridiagonal matrice A (thus L is a bidiagonal matrice that
-    can be solved in two distinct loops).
+class Spline:
+    """Cubic Spline class"""
 
-    additional ref: www.math.uh.edu/~jingqiu/math4364/spline.pdf 
-    """
-    x = np.asfarray(x)
-    y = np.asfarray(y)
+    def __init__(self, x, y):
+        self.b, self.c, self.d, self.w = [], [], [], []
 
-    # remove non finite values
-    # indexes = np.isfinite(x)
-    # x = x[indexes]
-    # y = y[indexes]
+        self.x = x
+        self.y = y
 
-    # check if sorted
-    if np.any(np.diff(x) < 0):
-        indexes = np.argsort(x)
-        x = x[indexes]
-        y = y[indexes]
+        self.nx = len(x)  # dimension of x
+        h = np.diff(x)
 
-    size = len(x)
+        # calc coefficient c
+        self.a = [iy for iy in y]
 
-    xdiff = np.diff(x)
-    ydiff = np.diff(y)
+        # calc coefficient c
+        A = self.__calc_A(h)
+        B = self.__calc_B(h)
+        #print(A)
+        #print("\n", B)
+        self.c = np.linalg.solve(A, B)
+        #print(self.c)
+        #  print(self.c1)
 
-    # allocate buffer matrices
-    Li = np.empty(size)
-    Li_1 = np.empty(size-1)
-    z = np.empty(size)
+        # calc spline coefficient b and d
+        for i in range(self.nx - 1):
+            self.d.append((self.c[i + 1] - self.c[i]) / (3.0 * h[i]))
+            tb = (self.a[i + 1] - self.a[i]) / h[i] - h[i] * \
+                (self.c[i + 1] + 2.0 * self.c[i]) / 3.0
+            self.b.append(tb)
+            
+    def calc(self, t):
+        u"""
+        Calc position
+        if t is outside of the input x, return None
+        """
 
-    # fill diagonals Li and Li-1 and solve [L][y] = [B]
-    Li[0] = sqrt(2*xdiff[0])
-    Li_1[0] = 0.0
-    B0 = 0.0 # natural boundary
-    z[0] = B0 / Li[0]
+        if t < self.x[0]:
+            return None
+        elif t > self.x[-1]:
+            return None
 
-    for i in range(1, size-1, 1):
-        Li_1[i] = xdiff[i-1] / Li[i-1]
-        Li[i] = sqrt(2*(xdiff[i-1]+xdiff[i]) - Li_1[i-1] * Li_1[i-1])
-        Bi = 6*(ydiff[i]/xdiff[i] - ydiff[i-1]/xdiff[i-1])
-        z[i] = (Bi - Li_1[i-1]*z[i-1])/Li[i]
+        i = self.__search_index(t)
+        dx = t - self.x[i]
+        #print(i, " i")
+        #print(len(self.d), " d")
+        #print(len(self.c), " c\n")
+        #print(self.d)
+        result = self.a[i] + self.b[i] * dx + \
+            self.c[i] * dx ** 2.0 + self.d[i] * dx ** 3.0
 
-    i = size - 1
-    Li_1[i-1] = xdiff[-1] / Li[i-1]
-    Li[i] = sqrt(2*xdiff[-1] - Li_1[i-1] * Li_1[i-1])
-    Bi = 0.0 # natural boundary
-    z[i] = (Bi - Li_1[i-1]*z[i-1])/Li[i]
+        return result
 
-    # solve [L.T][x] = [y]
-    i = size-1
-    z[i] = z[i] / Li[i]
-    for i in range(size-2, -1, -1):
-        z[i] = (z[i] - Li_1[i-1]*z[i+1])/Li[i]
+    def calcd(self, t):
+        u"""
+        Calc first derivative
+        if t is outside of the input x, return None
+        """
 
-    # find index
-    index = x.searchsorted(x0)
-    np.clip(index, 1, size-1, index)
+        if t < self.x[0]:
+            return None
+        elif t > self.x[-1]:
+            return None
 
-    xi1, xi0 = x[index], x[index-1]
-    yi1, yi0 = y[index], y[index-1]
-    zi1, zi0 = z[index], z[index-1]
-    hi1 = xi1 - xi0
+        i = self.__search_index(t)
+        dx = t - self.x[i]
+        result = self.b[i] + 2.0 * self.c[i] * dx + 3.0 * self.d[i] * dx ** 2.0
+        return result
 
-    # calculate cubic
-    f0 = zi0/(6*hi1)*(xi1-x0)**3 + \
-         zi1/(6*hi1)*(x0-xi0)**3 + \
-         (yi1/hi1 - zi1*hi1/6)*(x0-xi0) + \
-         (yi0/hi1 - zi0*hi1/6)*(xi1-x0)
-    return f0
+    def calcdd(self, t):
+        u"""
+        Calc second derivative
+        """
+
+        if t < self.x[0]:
+            return None
+        elif t > self.x[-1]:
+            return None
+
+        i = self.__search_index(t)
+        dx = t - self.x[i]
+        result = 2.0 * self.c[i] + 6.0 * self.d[i] * dx
+        return result
+
+    def __search_index(self, x):
+        u"""
+        search data segment index
+        """
+        print(self.x)
+        print(x, "\n")
+        return bisect.bisect(self.x, x) - 1
+
+    def __calc_A(self, h):
+        u"""
+        calc matrix A for spline coefficient c
+        """
+        A = np.zeros((self.nx, self.nx))
+        A[0, 0] = 1.0
+        for i in range(self.nx - 1):
+            if i != (self.nx - 2):
+                A[i + 1, i + 1] = 2.0 * (h[i] + h[i + 1])
+            A[i + 1, i] = h[i]
+            A[i, i + 1] = h[i]
+
+        A[0, 1] = 0.0
+        A[self.nx - 1, self.nx - 2] = 0.0
+        A[self.nx - 1, self.nx - 1] = 1.0
+        #  print(A)
+        return A
+
+    def __calc_B(self, h):
+        u"""
+        calc matrix B for spline coefficient c
+        """
+        B = np.zeros(self.nx)
+        for i in range(self.nx - 2):
+            B[i + 1] = 3.0 * (self.a[i + 2] - self.a[i + 1]) / \
+                h[i + 1] - 3.0 * (self.a[i + 1] - self.a[i]) / h[i]
+        #  print(B)
+        return B
+
+
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    x = np.linspace(0, 10, 11)
-    print(x)
-    y = np.sin(x)
-    print(y)
+    from random import uniform
+
+    data_gen = data_generator(100)
+    
+    x = [-0.5, 0.0, 0.5, 1.0, 1.5]
+    y = [3.2, 2.7, 6, 5, 6.5]
+    
+    x = np.arange(0.0, 100.0, 20)
+    y = data_gen.generate("mutable")
+    spline = Spline(x, y)
+    print(x, y)
     plt.scatter(x, y)
 
-    x_new = np.linspace(0, 10, 201)
-    print(cubic_interp1d(x_new, x, y))
-    plt.plot(x_new, cubic_interp1d(x_new, x, y))
-    
+    rx = np.arange(0, 80, 1)
+    print(len(rx))
+    print(len(x))
+    ry = [spline.calc(i) for i in rx]
+
+    plt.plot(x, y, label="basic")
+    #plt.plot(rx, cubic_interp1d(rx, x, y), label="cubic")
+    plt.plot(rx, ry, label="github")
+    plt.legend()
     plt.show()
