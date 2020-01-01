@@ -24,8 +24,10 @@ class Spline:
         B = self.__calc_B(h)
         print(A, "\n")
         
-        if algorithm =="gauss":
+        if algorithm == "gauss":
             self.c = matrix_calc(A, B).Gauss()
+        elif algorithm == "jacobi":
+            self.c = matrix_calc(A, B).Jacobi(5)
         else:
             self.c = np.linalg.solve(A, B)
         
@@ -95,7 +97,7 @@ if __name__ == '__main__':
     
     y = data_gen.generate("flat")
     yy = data_gen.generate("mutable")
-    spline = Spline(x, y)
+    spline = Spline(x, y, "jacobi")
     spline2 = Spline(x, yy, "gauss")
     
     plt.scatter(x, y)
@@ -110,6 +112,6 @@ if __name__ == '__main__':
     plt.plot(x, y, label="flat")
     plt.plot(x, yy, label="mutable")
     plt.plot(rx, ry, label="gauss")
-    plt.plot(rxx, ryy, label="scipy")
+    plt.plot(rxx, ryy, label="jacobi")
     plt.legend()
     plt.show()

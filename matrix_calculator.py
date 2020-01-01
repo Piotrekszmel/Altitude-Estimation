@@ -2,6 +2,7 @@ import numpy as np
 import random
 import copy
 
+
 class matrix_calc:
     def __init__(self, A, B):
         self.A = A
@@ -34,6 +35,39 @@ class matrix_calc:
         self.X = self.count()
         return self.X
 
+    def Jacobi(self, n):
+        X = [0] * len(self.B)
+        X_coeff = [[0] * len(self.B)] * len(self.B)
+        B_divided = []
+        
+        for i in range(len(self.B)):
+            values = []
+            for j in range(len(self.B)):
+                values.append(self.A[i][j] / self.A[i][i])
+            X_coeff[i] = [val if self.B[i] >= 0 else -val  for val in values]
+            
+            B_divided.append(self.B[i] / self.A[i][i])
+        
+        for _ in range(n):
+            X_c = copy.deepcopy(X)
+            for j in range(len(X)):
+                x_sum = np.sum(np.asarray(X_c[:j]) * np.asarray(X_coeff[j][:j])) + np.sum(np.asarray(X_c[j+1:]) * np.asarray(X_coeff[j][j+1:]))
+                b = B_divided[j]
+                #print("sum = ", x_sum)
+                #print("b = ", b)
+                #print("X =", X[j])
+                if X[j] >= 0 and b >= 0:
+                    x_sum *= -1
+                elif X[j] < 0 and b >= 0:
+                    b *= -1
+                elif X[j] >= 0 and b < 0:
+                    x_sum *= -1
+                #print("AFTER b = ", b, "\n")
+                X[j] = b + x_sum
+            
+            print(X)
+        return X
+
     def count(self):
         for row in range(len(self.A) -1, -1, -1):
             self.A[row, :row] = np.multiply(self.A[row, :row], self.X[:row].T)
@@ -53,3 +87,8 @@ class matrix_calc:
         temp = self.A[i , self.row - 1]
         for j in range(len(self.A)):
             self.A[i, j] = np.float64((self.A[i, j] + (self.A[self.row - 1, j] * (-temp / self.A[self.row - 1, self.row - 1]))))
+
+
+
+m_cal = matrix_calc([[4, -1, -0.2, 2], [-1, 5, 0, -2], [0.2, 1, 10, -1], [0, -2, -1, 4]], [30, 0, -10, 5])
+print("\n", m_cal.Jacobi(5))
