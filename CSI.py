@@ -1,13 +1,13 @@
 import numpy as np
 from math import sqrt
 from matrix_calculator import matrix_calc
-#from data_generator import data_generator
+from data_generator import data_generator
 import bisect
 
 
 class Spline:
     """Cubic Spline class"""
-    def __init__(self, x, y):
+    def __init__(self, x, y, algorithm=None):
         self.b, self.c, self.d, self.w = [], [], [], []
 
         self.x = x
@@ -18,14 +18,18 @@ class Spline:
 
         # calc coefficient c
         self.a = [iy for iy in y]
-
+        
         # calc coefficient c
         A = self.__calc_A(h)
         B = self.__calc_B(h)
+        print(A, "\n")
         
-        #self.c = np.linalg.solve(A, B)
-        self.c = matrix_calc(A, B).Gauss()
+        if algorithm =="gauss":
+            self.c = matrix_calc(A, B).Gauss()
+        else:
+            self.c = np.linalg.solve(A, B)
         
+
         # calc spline coefficient b and d
         for i in range(self.nx - 1):
             self.d.append((self.c[i + 1] - self.c[i]) / (3.0 * h[i]))
@@ -53,7 +57,7 @@ class Spline:
 
     def __calc_A(self, h):
         """calc matrix A for spline coefficient c"""
-        A = np.zeros((self.nx, self.nx))
+        A = np.zeros(shape=(self.nx, self.nx))
         A[0, 0] = 1.0
         for i in range(self.nx - 1):
             if i != (self.nx - 2):
@@ -70,34 +74,42 @@ class Spline:
         """calc matrix B for spline coefficient c"""
         B = np.zeros(self.nx)
         for i in range(self.nx - 2):
-            B[i + 1] = 3.0 * (self.a[i + 2] - self.a[i + 1]) / \
-                h[i + 1] - 3.0 * (self.a[i + 1] - self.a[i]) / h[i]
+            B[i + 1] = 3.0 * (self.a[i + 2] - self.a[i + 1]) / h[i + 1] - 3.0 * (self.a[i + 1] - self.a[i]) / h[i]
         return B
-
-
 
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import random
     from random import uniform
-    random.seed(42)
-    #data_gen = data_generator(100)
+    import math
+    random.seed(45)
+    data_gen = data_generator(1000)
     
-    x = [-0.5, 0.0, 0.5, 1.0, 1.5]
-    y = [3.2, 2.7, 6, 5, 6.5]
+    #x = [-0.5, 0.0, 0.5, 1.0, 1.5]
+    #y = [3.2, 2.7, 6, 5, 6.5]
     
-    x = np.arange(0.0, 100.0, 20)
-    y = [uniform(0, 10) for i in range(5)]
     
-    #y = data_gen.generate("mutable")
+    x = np.arange(0.0, 1000.0, 20)
+    y = [uniform(0, 10) for i in range(50)]
+    
+    y = data_gen.generate("flat")
+    yy = data_gen.generate("mutable")
     spline = Spline(x, y)
+    spline2 = Spline(x, yy, "gauss")
+    
     plt.scatter(x, y)
+    plt.scatter(x, yy)  
+    
+    rxx = np.arange(0.0, 980.0, 0.01)
+    ryy = [spline.calc(i) for i in rxx]
+    
+    rx = np.arange(0.0, 980.0, 0.01)
+    ry = [spline2.calc(i) for i in rx]
 
-    rx = np.arange(0, 80, 1)
-    ry = [spline.calc(i) for i in rx]
-
-    plt.plot(x, y, label="true")
+    plt.plot(x, y, label="flat")
+    plt.plot(x, yy, label="mutable")
     plt.plot(rx, ry, label="gauss")
+    plt.plot(rxx, ryy, label="scipy")
     plt.legend()
     plt.show()
