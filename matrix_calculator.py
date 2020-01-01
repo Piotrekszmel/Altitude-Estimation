@@ -65,7 +65,7 @@ class matrix_calc:
                 #print("AFTER b = ", b, "\n")
                 X[j] = b + x_sum
             
-            print(X)
+            
         return X
 
     def count(self):
@@ -88,7 +88,3 @@ class matrix_calc:
         for j in range(len(self.A)):
             self.A[i, j] = np.float64((self.A[i, j] + (self.A[self.row - 1, j] * (-temp / self.A[self.row - 1, self.row - 1]))))
 
-
-
-m_cal = matrix_calc([[4, -1, -0.2, 2], [-1, 5, 0, -2], [0.2, 1, 10, -1], [0, -2, -1, 4]], [30, 0, -10, 5])
-print("\n", m_cal.Jacobi(5))

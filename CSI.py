@@ -22,7 +22,7 @@ class Spline:
         # calc coefficient c
         A = self.__calc_A(h)
         B = self.__calc_B(h)
-        print(A, "\n")
+        
         
         if algorithm == "gauss":
             self.c = matrix_calc(A, B).Gauss()
@@ -85,31 +85,31 @@ if __name__ == '__main__':
     import random
     from random import uniform
     import math
-    random.seed(45)
-    data_gen = data_generator(1000)
+    
+    data_gen = data_generator(30000)
     
     #x = [-0.5, 0.0, 0.5, 1.0, 1.5]
     #y = [3.2, 2.7, 6, 5, 6.5]
     
     
-    x = np.arange(0.0, 1000.0, 20)
-    y = [uniform(0, 10) for i in range(50)]
+    x = np.arange(0.0, 30000.0, 3000)
+    #y = [uniform(0, 10) for i in range(5)]
     
     y = data_gen.generate("flat")
     yy = data_gen.generate("mutable")
-    spline = Spline(x, y, "jacobi")
+    spline = Spline(x, yy, "jacobi")
     spline2 = Spline(x, yy, "gauss")
-    
-    plt.scatter(x, y)
+    print(len(x))
+    print(len(yy))
     plt.scatter(x, yy)  
     
-    rxx = np.arange(0.0, 980.0, 0.01)
+    rxx = np.arange(0.0, 27000.0, 1500)
     ryy = [spline.calc(i) for i in rxx]
     
-    rx = np.arange(0.0, 980.0, 0.01)
+    rx = np.arange(0.0, 27000.0, 1500)
     ry = [spline2.calc(i) for i in rx]
 
-    plt.plot(x, y, label="flat")
+    #plt.plot(x, y, label="flat")
     plt.plot(x, yy, label="mutable")
     plt.plot(rx, ry, label="gauss")
     plt.plot(rxx, ryy, label="jacobi")
