@@ -28,6 +28,8 @@ class Spline:
             self.c = matrix_calc(A, B).Gauss()
         elif algorithm == "jacobi":
             self.c = matrix_calc(A, B).Jacobi(100)
+        elif algorithm == "gaussSeidel":
+            self.c = matrix_calc(A, B).GaussSeidel(100)
         else:
             self.c = np.linalg.solve(A, B)
         
@@ -99,18 +101,23 @@ if __name__ == '__main__':
     yy = data_gen.generate("mutable")
     spline = Spline(x, yy, "jacobi")
     spline2 = Spline(x, yy, "gauss")
+    spline3 = Spline(x, yy, "gaussSeidel")
     
     #plt.scatter(x, yy)  
     
     rxx = np.arange(0.0, 990, 5)
     ryy = [spline.calc(i) for i in rxx]
     
-    rx = np.arange(0.0, 990, 5)
+    rx = np.arange(0.0, 990, 9)
     ry = [spline2.calc(i) for i in rx]
+
+    rxxx = np.arange(0.0, 990, 9)
+    ryyy = [spline3.calc(i) for i in rxxx]
 
     #plt.plot(x, y, label="flat")
     plt.plot(x, yy, label="elevation")
-    plt.plot(rx, ry, label="gauss")
-    plt.plot(rxx, ryy, label="jacobi")
+    #plt.plot(rx, ry, label="gauss", color="black")
+    plt.plot(rxx, ryy, label="jacobi", color="black")
+    plt.plot(rxxx, ryyy, label="gaussSeidel", color="red")
     plt.legend()
     plt.show()

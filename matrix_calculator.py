@@ -62,24 +62,34 @@ class matrix_calc:
                 X[j] = b + x_sum
         return X
 
-    def GaussSeidel(self):
+    def GaussSeidel(self, n):
         l = len(self.B)
+        X = [0] * l
         L = np.zeros(shape=(l, l))
         D = np.zeros(shape=(l, l))
         U = np.zeros(shape=(l, l))
+        B_divided = []
+        sign = -1
+
+        np.fill_diagonal(D, np.diagonal(self.A))
         for i in range(l):
             for j in range(l):
-                if i > j:
-                    L[i][j] = self.A[i][j]
+                if i > j and self.A[i][j] != 0.0:
+                    L[i][j] = self.A[i][j] * pow(np.diagonal(D)[i], -1)
                 elif i == j:
-                    D[i][j] = self.A[i][j]
+                    B_divided.append(pow(self.A[i][j], -1) * self.B[i])
                 else:
-                    U[i][j] = self.A[i][j]
+                    U[i][j] = self.A[i][j] * pow(np.diagonal(D)[i], -1)
         
         D = np.linalg.matrix_power(D, -1)
-        #print(L)
-        print("\n", D)
-        #print("\n", U)
+        
+        for _ in range(n):
+            X_c = copy.deepcopy(X)
+            for i in range(l):
+                x_sum = np.sum(np.asarray(X[:i]) * sign * np.asarray(L[i][:i])) + np.sum(np.asarray(X_c[i+1:]) * sign * np.asarray(U[i][i+1:])) + np.sum(np.asarray(X_c[i+1:]) * sign * np.asarray(L[i][i+1:])) + np.sum(np.asarray(X[:i]) * sign * np.asarray(U[i][:i]))
+                b = B_divided[i]
+                X[i] = x_sum + b
+        return X
 
     def count(self):
         for row in range(len(self.A) -1, -1, -1):
@@ -102,5 +112,5 @@ class matrix_calc:
             self.A[i, j] = np.float64((self.A[i, j] + (self.A[self.row - 1, j] * (-temp / self.A[self.row - 1, self.row - 1]))))
 
 
-calc = matrix_calc([[4, -1, -0.2, 2], [-1, 5, 0, -2], [0.2, 1, 10, -1], [0, -2, -1, 4]], [30, 0, -10, 5])
-calc.GaussSeidel()
+#calc = matrix_calc([[4, -1, -0.2, 2], [-1, 5, 0, -2], [0.2, 1, 10, -1], [0, -2, -1, 4]], [30, 0, -10, 5])
+#print(calc.GaussSeidel(5))
