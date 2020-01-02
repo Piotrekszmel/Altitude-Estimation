@@ -53,20 +53,33 @@ class matrix_calc:
             for j in range(len(X)):
                 x_sum = np.sum(np.asarray(X_c[:j]) * np.asarray(X_coeff[j][:j])) + np.sum(np.asarray(X_c[j+1:]) * np.asarray(X_coeff[j][j+1:]))
                 b = B_divided[j]
-                #print("sum = ", x_sum)
-                #print("b = ", b)
-                #print("X =", X[j])
                 if X[j] >= 0 and b >= 0:
                     x_sum *= -1
                 elif X[j] < 0 and b >= 0:
                     b *= -1
                 elif X[j] >= 0 and b < 0:
                     x_sum *= -1
-                #print("AFTER b = ", b, "\n")
                 X[j] = b + x_sum
-            
-            
         return X
+
+    def GaussSeidel(self):
+        l = len(self.B)
+        L = np.zeros(shape=(l, l))
+        D = np.zeros(shape=(l, l))
+        U = np.zeros(shape=(l, l))
+        for i in range(l):
+            for j in range(l):
+                if i > j:
+                    L[i][j] = self.A[i][j]
+                elif i == j:
+                    D[i][j] = self.A[i][j]
+                else:
+                    U[i][j] = self.A[i][j]
+        
+        D = np.linalg.matrix_power(D, -1)
+        #print(L)
+        print("\n", D)
+        #print("\n", U)
 
     def count(self):
         for row in range(len(self.A) -1, -1, -1):
@@ -88,3 +101,6 @@ class matrix_calc:
         for j in range(len(self.A)):
             self.A[i, j] = np.float64((self.A[i, j] + (self.A[self.row - 1, j] * (-temp / self.A[self.row - 1, self.row - 1]))))
 
+
+calc = matrix_calc([[4, -1, -0.2, 2], [-1, 5, 0, -2], [0.2, 1, 10, -1], [0, -2, -1, 4]], [30, 0, -10, 5])
+calc.GaussSeidel()
