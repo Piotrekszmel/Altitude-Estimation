@@ -33,14 +33,13 @@ class Spline:
         else:
             self.c = np.linalg.solve(A, B)
         
-
         # calc spline coefficient b and d
         for i in range(self.nx - 1):
             self.d.append((self.c[i + 1] - self.c[i]) / (3.0 * h[i]))
             tb = (self.a[i + 1] - self.a[i]) / h[i] - h[i] * \
                 (self.c[i + 1] + 2.0 * self.c[i]) / 3.0
             self.b.append(tb)
-            
+        
     def calc(self, t):
         """Calc position if t is outside of the input x, return None"""
 
@@ -53,6 +52,7 @@ class Spline:
         dx = t - self.x[i]
         
         result = self.a[i] + self.b[i] * dx + self.c[i] * dx ** 2.0 + self.d[i] * dx ** 3.0
+        
         return result
 
     def __search_index(self, x):
@@ -86,38 +86,58 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import random
     from random import uniform
-    import math
+    import math 
     
-    data_gen = data_generator(1000)
-    
-    #x = [-0.5, 0.0, 0.5, 1.0, 1.5]
-    #y = [3.2, 2.7, 6, 5, 6.5]
-    
-    
-    x = np.arange(0.0, 1000, 10)
-    #y = [uniform(0, 10) for i in range(5)]
-    
-    y = data_gen.generate("flat")
-    yy = data_gen.generate("mutable")
-    spline = Spline(x, yy, "jacobi")
-    spline2 = Spline(x, yy, "gauss")
-    spline3 = Spline(x, yy, "gaussSeidel")
-    
-    #plt.scatter(x, yy)  
-    
-    rxx = np.arange(0.0, 990, 5)
-    ryy = [spline.calc(i) for i in rxx]
-    
-    rx = np.arange(0.0, 990, 9)
-    ry = [spline2.calc(i) for i in rx]
 
-    rxxx = np.arange(0.0, 990, 9)
-    ryyy = [spline3.calc(i) for i in rxxx]
-
+    for value in [200, 300, 500]:
+        n = value
+        jmp = 1
+        
+        data_gen = data_generator(n, jmp)
+        
+        xx = np.arange(0.0, n, jmp)
+        yy = data_gen.generate("flat")
+        
+        y = [v for i, v in enumerate(yy) if i % 2 == 0]
+        x = np.arange(0.0, n, jmp * 2)
+        
+        spline = Spline(x, y, "gauss")
+        
+        rx = np.arange(0.0, n - jmp*2, 1)
+        ry = [spline.calc(i) for i in rx]
+        
+        spline2 = Spline(x, y, "jacobi")
+        rxx = np.arange(0.0, n - jmp*2, 1)
+        ryy = [spline2.calc(i) for i in rxx]
+        
+        spline3 = Spline(x, y, "gaussSeidel")
+        rxxx = np.arange(0.0, n - jmp*2, 1)
+        ryyy = [spline3.calc(i) for i in rxxx]
+        
+        gauss_diff = []
+        jacobi_diff = []
+        gaussSeidel_diff = []
+        basic_diff = []
+        
+        for k, i in enumerate(range(len(ry))):
+            gauss_diff.append(ry[i] - yy[k])
+            jacobi_diff.append(ryy[i] - yy[k])
+            gaussSeidel_diff.append(ryyy[i] - yy[k])
+            
+        print("N = ", n)
+        print("gauss = ", sum(gauss_diff))
+        print("seidel = ", sum(gaussSeidel_diff))
+        print("jacobi = ", sum(jacobi_diff))
+        print("\n")
+    
+    
     #plt.plot(x, y, label="flat")
-    plt.plot(x, yy, label="elevation")
-    #plt.plot(rx, ry, label="gauss", color="black")
+    
+    plt.plot(xx[:-3], yy[:-3], label="flat")
+    #plt.plot(xx, y, label="basic")
+    plt.plot(rx, ry, label="gauss", color="purple")
     plt.plot(rxx, ryy, label="jacobi", color="black")
-    plt.plot(rxxx, ryyy, label="gaussSeidel", color="red")
+    #plt.plot(rxxx, ryyy, label="gaussSeidel", color="green")
     plt.legend()
     plt.show()
+    

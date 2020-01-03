@@ -33,6 +33,7 @@ class matrix_calc:
             self.row += 1
         
         self.X = self.count()
+        #print(self.X)
         return self.X
 
     def Jacobi(self, n):
@@ -89,6 +90,7 @@ class matrix_calc:
                 x_sum = np.sum(np.asarray(X[:i]) * sign * np.asarray(L[i][:i])) + np.sum(np.asarray(X_c[i+1:]) * sign * np.asarray(U[i][i+1:])) + np.sum(np.asarray(X_c[i+1:]) * sign * np.asarray(L[i][i+1:])) + np.sum(np.asarray(X[:i]) * sign * np.asarray(U[i][:i]))
                 b = B_divided[i]
                 X[i] = x_sum + b
+        
         return X
 
     def count(self):
