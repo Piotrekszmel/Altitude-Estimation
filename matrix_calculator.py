@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import copy
+import time
 
 
 class matrix_calc:
@@ -31,12 +32,13 @@ class matrix_calc:
                 self.calculation_A_B(ii)
             
             self.row += 1
-        
+            
         self.X = self.count()
         #print(self.X)
         return self.X
 
     def Jacobi(self, n):
+        
         X = [0] * len(self.B)
         X_coeff = [[0] * len(self.B)] * len(self.B)
         B_divided = []
@@ -48,6 +50,9 @@ class matrix_calc:
             X_coeff[i] = [val if self.B[i] >= 0 else -val  for val in values]
             
             B_divided.append(self.B[i] / self.A[i][i])
+        
+
+        t = time.time()
         
         for _ in range(n):
             X_c = copy.deepcopy(X)
@@ -61,7 +66,8 @@ class matrix_calc:
                 elif X[j] >= 0 and b < 0:
                     x_sum *= -1
                 X[j] = b + x_sum
-        return X
+        
+        return X, time.time() - t
 
     def GaussSeidel(self, n):
         l = len(self.B)
@@ -83,7 +89,7 @@ class matrix_calc:
                     U[i][j] = self.A[i][j] * pow(np.diagonal(D)[i], -1)
         
         D = np.linalg.matrix_power(D, -1)
-        
+        t = time.time()
         for _ in range(n):
             X_c = copy.deepcopy(X)
             for i in range(l):
@@ -91,7 +97,7 @@ class matrix_calc:
                 b = B_divided[i]
                 X[i] = x_sum + b
         
-        return X
+        return X, time.time() - t
 
     def count(self):
         for row in range(len(self.A) -1, -1, -1):

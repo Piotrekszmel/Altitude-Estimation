@@ -3,7 +3,7 @@ from math import sqrt
 from matrix_calculator import matrix_calc
 from data_generator import data_generator
 import bisect
-
+import time
 
 class Spline:
     """Cubic Spline class"""
@@ -18,28 +18,35 @@ class Spline:
 
         # calc coefficient c
         self.a = [iy for iy in y]
-        
+        self.time = 0
         # calc coefficient c
+        
         A = self.__calc_A(h)
         B = self.__calc_B(h)
         
-        
         if algorithm == "gauss":
+            
             self.c = matrix_calc(A, B).Gauss()
+            
         elif algorithm == "jacobi":
+            
             self.c = matrix_calc(A, B).Jacobi(100)
+            
         elif algorithm == "gaussSeidel":
+            
             self.c = matrix_calc(A, B).GaussSeidel(100)
+            
         else:
             self.c = np.linalg.solve(A, B)
         
-        # calc spline coefficient b and d
+        
         for i in range(self.nx - 1):
             self.d.append((self.c[i + 1] - self.c[i]) / (3.0 * h[i]))
             tb = (self.a[i + 1] - self.a[i]) / h[i] - h[i] * \
                 (self.c[i + 1] + 2.0 * self.c[i]) / 3.0
             self.b.append(tb)
-        
+           
+
     def calc(self, t):
         """Calc position if t is outside of the input x, return None"""
 
@@ -88,56 +95,54 @@ if __name__ == '__main__':
     from random import uniform
     import math 
     
+    
+    gauss_time = []
+    jacobi_time = []
+    gaussSeidel_time = []
 
-    for value in [200, 300, 500]:
-        n = value
-        jmp = 1
+    for d_type in  ["flat"]:
+        gauss_time = []
+        jacobi_time = []
+        gaussSeidel_time = []
         
-        data_gen = data_generator(n, jmp)
-        
-        xx = np.arange(0.0, n, jmp)
-        yy = data_gen.generate("flat")
-        
-        y = [v for i, v in enumerate(yy) if i % 2 == 0]
-        x = np.arange(0.0, n, jmp * 2)
-        
-        spline = Spline(x, y, "gauss")
-        
-        rx = np.arange(0.0, n - jmp*2, 1)
-        ry = [spline.calc(i) for i in rx]
-        
-        spline2 = Spline(x, y, "jacobi")
-        rxx = np.arange(0.0, n - jmp*2, 1)
-        ryy = [spline2.calc(i) for i in rxx]
-        
-        spline3 = Spline(x, y, "gaussSeidel")
-        rxxx = np.arange(0.0, n - jmp*2, 1)
-        ryyy = [spline3.calc(i) for i in rxxx]
-        
-        gauss_diff = []
-        jacobi_diff = []
-        gaussSeidel_diff = []
-        basic_diff = []
-        
-        for k, i in enumerate(range(len(ry))):
-            gauss_diff.append(ry[i] - yy[k])
-            jacobi_diff.append(ryy[i] - yy[k])
-            gaussSeidel_diff.append(ryyy[i] - yy[k])
+        for value in [200]:
+            n = value
+            jmp = 1
             
-        print("N = ", n)
-        print("gauss = ", sum(gauss_diff))
-        print("seidel = ", sum(gaussSeidel_diff))
-        print("jacobi = ", sum(jacobi_diff))
-        print("\n")
+            data_gen = data_generator(n, jmp)
+            
+            xx = np.arange(0.0, n, jmp)
+            yy = data_gen.generate(d_type)
+            
+            y = [v for i, v in enumerate(yy) if i % 2 == 0]
+            x = np.arange(0.0, n, jmp * 2)
+            print(y[1])
+            spline = Spline(x, y, "gauss")
+            rx = np.arange(0.0, n - jmp*2, 1)
+            ry = [spline.calc(i) for i in rx]
+            print(ry[4])
+            print(ry[1])
+            print(ry[3])
+            print(ry[2])
+            #1450
+            #gauss_time.append(spline.time)
+            """
+            spline2 = Spline(x, y, "jacobi")
+            rxx = np.arange(0.0, n - jmp*2, 1)
+            ryy = [spline2.calc(i) for i in rxx]
+            jacobi_time.append(spline2.time)
+
+            spline3 = Spline(x, y, "gaussSeidel")
+            rxxx = np.arange(0.0, n - jmp*2, 1)
+            ryyy = [spline3.calc(i) for i in rxxx]
+            gaussSeidel_time.append(spline3.time)
+            """
+        """
+        plt.xlabel("nodes")
+        plt.ylabel("time")
+        plt.legend()
+        plt.show()
+        """
+        
     
-    
-    #plt.plot(x, y, label="flat")
-    
-    plt.plot(xx[:-3], yy[:-3], label="flat")
-    #plt.plot(xx, y, label="basic")
-    plt.plot(rx, ry, label="gauss", color="purple")
-    plt.plot(rxx, ryy, label="jacobi", color="black")
-    #plt.plot(rxxx, ryyy, label="gaussSeidel", color="green")
-    plt.legend()
-    plt.show()
     
