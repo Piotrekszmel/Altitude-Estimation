@@ -12,7 +12,7 @@ class matrix_calc:
         self.X = np.ones_like(self.B, dtype=np.float64)
         self.temp_A = copy.deepcopy(self.A)
         self.temp_B = copy.deepcopy(self.B)
-
+        
     def Gauss(self):
         for i in range(self.row, len(self.A)):
             
@@ -34,11 +34,9 @@ class matrix_calc:
             self.row += 1
             
         self.X = self.count()
-        #print(self.X)
         return self.X
 
     def Jacobi(self, n):
-        
         X = [0] * len(self.B)
         X_coeff = [[0] * len(self.B)] * len(self.B)
         B_divided = []
@@ -50,9 +48,6 @@ class matrix_calc:
             X_coeff[i] = [val if self.B[i] >= 0 else -val  for val in values]
             
             B_divided.append(self.B[i] / self.A[i][i])
-        
-
-        t = time.time()
         
         for _ in range(n):
             X_c = copy.deepcopy(X)
@@ -67,7 +62,7 @@ class matrix_calc:
                     x_sum *= -1
                 X[j] = b + x_sum
         
-        return X, time.time() - t
+        return X
 
     def GaussSeidel(self, n):
         l = len(self.B)
@@ -89,7 +84,7 @@ class matrix_calc:
                     U[i][j] = self.A[i][j] * pow(np.diagonal(D)[i], -1)
         
         D = np.linalg.matrix_power(D, -1)
-        t = time.time()
+        
         for _ in range(n):
             X_c = copy.deepcopy(X)
             for i in range(l):
@@ -97,7 +92,7 @@ class matrix_calc:
                 b = B_divided[i]
                 X[i] = x_sum + b
         
-        return X, time.time() - t
+        return X
 
     def count(self):
         for row in range(len(self.A) -1, -1, -1):

@@ -5,9 +5,10 @@ from data_generator import data_generator
 import bisect
 import time
 
+
 class Spline:
-    def __init__(self, x, y, algorithm=None):
-        self.b, self.c, self.d, self.w = [], [], [], []
+    def __init__(self, x, y, iter_num=None, algorithm=None):
+        self.b, self.c, self.d, self.matrix = [], [], [], []
 
         self.x = x
         self.y = y
@@ -22,28 +23,29 @@ class Spline:
         
         A = self.__calc_A(h)
         B = self.__calc_B(h)
-        
         if algorithm == "gauss":
-            
             self.matrix = matrix_calc(A, B).Gauss()
             
         elif algorithm == "jacobi":
-            
-            self.matrix, _= np.asarray(matrix_calc(A, B).Jacobi(10))
-               
+            if iter_num == None:
+                iter_num = 50
+            start = time.time()
+            self.matrix = np.asarray(matrix_calc(A, B).Jacobi(iter_num))
+            print(time.time() - start)
         elif algorithm == "gaussSeidel":
-            
-            self.matrix, _ = matrix_calc(A, B).GaussSeidel(10)
-            
+            if iter_num == None:
+                iter_num = 50
+            self.matrix = matrix_calc(A, B).GaussSeidel(iter_num)
         else:
             self.matrix = np.linalg.solve(A, B)
+        
         
         for i in range(self.nx - 2):
             self.c.append(self.matrix[i] / 2)
             self.b.append(((self.a[i+1] - self.a[i]) / h[i]) - (((2*self.matrix[i] + self.matrix[i+1]) / 6) * h[i+1]))
             self.d.append((self.matrix[i+1] - self.matrix[i]) / (6 * h[i+1]))
 
-    def calc(self, t):
+    def calc(self, t, method=None):
         if t < self.x[0]:
             return None
         elif t > self.x[-1]:
@@ -51,7 +53,12 @@ class Spline:
 
         i = self.__search_index(t)
         dx = abs(t - self.x[i])
-        
+        if method != None:
+            if dx == 0 and t > 0.0:
+                dx = 1
+                result = self.a[i-1] + self.b[i-1] * dx + self.matrix[i-1] * dx ** 2.0 + self.d[i-1] * dx ** 3.0
+                return result
+
         result = self.a[i] + self.b[i] * dx + self.matrix[i] * dx ** 2.0 + self.d[i] * dx ** 3.0
         return result
 
@@ -84,18 +91,14 @@ if __name__ == '__main__':
     import random
     from random import uniform
     import math 
+    random.seed(42)
     
-    random.seed(100)
     gauss_time = []
     jacobi_time = []
     gaussSeidel_time = []
 
     for d_type in  ["mutable"]:
-        gauss_time = []
-        jacobi_time = []
-        gaussSeidel_time = []
-        
-        for value in [100]:
+        for value in [20000]:
             n = value
             jmp = 1
             
@@ -105,24 +108,10 @@ if __name__ == '__main__':
             yy = data_gen.generate(d_type)
             y = [v for i, v in enumerate(yy) if i % 2 == 0]
             x = np.arange(0.0, n, jmp * 2)
-           
-            spline = Spline(x, y, "gauss")
+            
+            spline = Spline(x, y, algorithm="jacobi")
             rx = np.arange(0.0, n - jmp*2, 1)
             ry = [spline.calc(i) for i in rx[:-2]]
 
-            plt.plot(xx, yy, label="true")
-            plt.plot(rx[:-2], ry, label="gauss")
-            plt.legend()
-            plt.show()
-    print(len(ry))
-    print(len(y))
-    print(len(yy))      
-    error = 0
-    for j, i in enumerate(range(1, len(y)-2)):
-        error += abs(ry[i*2] - yy[i*2])
-    print(error / j)
-
-    error = 0
-    for j, i in enumerate(range(len(ry))):
-        error += abs(ry[i] - yy[i])
-    print(error / j)
+                
+    
