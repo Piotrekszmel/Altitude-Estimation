@@ -98,7 +98,7 @@ if __name__ == '__main__':
     gaussSeidel_time = []
 
     for d_type in  ["mutable"]:
-        for value in [20000]:
+        for value in [40000]:
             n = value
             jmp = 1
             
