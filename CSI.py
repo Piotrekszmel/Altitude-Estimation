@@ -39,7 +39,6 @@ class Spline:
         else:
             self.matrix = np.linalg.solve(A, B)
         
-        
         for i in range(self.nx - 2):
             self.c.append(self.matrix[i] / 2)
             self.b.append(((self.a[i+1] - self.a[i]) / h[i]) - (((2*self.matrix[i] + self.matrix[i+1]) / 6) * h[i+1]))
@@ -53,13 +52,8 @@ class Spline:
 
         i = self.__search_index(t)
         dx = abs(t - self.x[i])
-        if method != None:
-            if dx == 0 and t > 0.0:
-                dx = 1
-                result = self.a[i-1] + self.b[i-1] * dx + self.matrix[i-1] * dx ** 2.0 + self.d[i-1] * dx ** 3.0
-                return result
-
-        result = self.a[i] + self.b[i] * dx + self.matrix[i] * dx ** 2.0 + self.d[i] * dx ** 3.0
+        
+        result = self.a[i] + self.b[i] * dx + self.c[i] * dx ** 2.0 + self.d[i] * dx ** 3.0
         return result
 
     def __search_index(self, x):
@@ -85,33 +79,6 @@ class Spline:
             B[i + 1] = 3.0 * (self.a[i + 2] - self.a[i + 1]) / h[i + 1] - 3.0 * (self.a[i + 1] - self.a[i]) / h[i]
         return B
 
-
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    import random
-    from random import uniform
-    import math 
-    random.seed(42)
-    
-    gauss_time = []
-    jacobi_time = []
-    gaussSeidel_time = []
-
-    for d_type in  ["mutable"]:
-        for value in [40000]:
-            n = value
-            jmp = 1
-            
-            data_gen = data_generator(n, jmp)
-            
-            xx = np.arange(0.0, n, jmp)
-            yy = data_gen.generate(d_type)
-            y = [v for i, v in enumerate(yy) if i % 2 == 0]
-            x = np.arange(0.0, n, jmp * 2)
-            
-            spline = Spline(x, y, algorithm="jacobi")
-            rx = np.arange(0.0, n - jmp*2, 1)
-            ry = [spline.calc(i) for i in rx[:-2]]
 
                 
     

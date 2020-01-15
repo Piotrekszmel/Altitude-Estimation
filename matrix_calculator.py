@@ -61,7 +61,6 @@ class matrix_calc:
                 elif X[j] >= 0 and b < 0:
                     x_sum *= -1
                 X[j] = b + x_sum
-        
         return X
 
     def GaussSeidel(self, n):
@@ -91,7 +90,6 @@ class matrix_calc:
                 x_sum = np.sum(np.asarray(X[:i]) * sign * np.asarray(L[i][:i])) + np.sum(np.asarray(X_c[i+1:]) * sign * np.asarray(U[i][i+1:])) + np.sum(np.asarray(X_c[i+1:]) * sign * np.asarray(L[i][i+1:])) + np.sum(np.asarray(X[:i]) * sign * np.asarray(U[i][:i]))
                 b = B_divided[i]
                 X[i] = x_sum + b
-        
         return X
 
     def count(self):
@@ -113,7 +111,3 @@ class matrix_calc:
         temp = self.A[i , self.row - 1]
         for j in range(len(self.A)):
             self.A[i, j] = np.float64((self.A[i, j] + (self.A[self.row - 1, j] * (-temp / self.A[self.row - 1, self.row - 1]))))
-
-
-#calc = matrix_calc([[4, -1, -0.2, 2], [-1, 5, 0, -2], [0.2, 1, 10, -1], [0, -2, -1, 4]], [30, 0, -10, 5])
-#print(calc.GaussSeidel(5))
